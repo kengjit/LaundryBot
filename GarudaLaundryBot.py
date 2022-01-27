@@ -31,6 +31,11 @@ QR_WASHER_LAST_USED = ''
 COIN_DRYER_LAST_USED = ''
 COIN_WASHER_LAST_USED = ''
 
+QR_DRYER_LAST_COLLECTED = ''
+QR_WASHER_LAST_COLLECTED = ''
+COIN_DRYER_LAST_COLLECTED = ''
+COIN_WASHER_LAST_COLLECTED = ''
+
 #List of Jobs
 JOB = [0,0,0,0]
 
@@ -42,28 +47,28 @@ def qr_washer_alarm(context: CallbackContext) -> None:
     job = context.job
     context.bot.send_message(job.context, text='Your clothes are ready for collection! Please collect them now so that others may use it')
     global QR_WASHER
-    QR_WASHER = 'AVAILABLE'
+    QR_WASHER = 'UNCOLLECTED'
     
 def qr_dryer_alarm(context: CallbackContext) -> None:
     """Send the alarm message."""
     job = context.job
     context.bot.send_message(job.context, text='Your clothes are ready for collection! Please collect them now so that others may use it')
     global QR_DRYER
-    QR_DRYER = 'AVAILABLE'
+    QR_DRYER = 'UNCOLLECTED'
 
 def coin_washer_alarm(context: CallbackContext) -> None:
     """Send the alarm message."""
     job = context.job
     context.bot.send_message(job.context, text='Your clothes are ready for collection! Please collect them now so that others may use it')
     global COIN_WASHER
-    COIN_WASHER = 'AVAILABLE'
+    COIN_WASHER = 'UNCOLLECTED'
     
 def coin_dryer_alarm(context: CallbackContext) -> None:
     """Send the alarm message."""
     job = context.job
     context.bot.send_message(job.context, text='Your clothes are ready for collection! Please collect them now so that others may use it')
     global COIN_DRYER
-    COIN_DRYER = 'AVAILABLE'
+    COIN_DRYER = 'UNCOLLECTED'
 
 def start(update: Update, context: CallbackContext) -> None:
     keyboard = [
@@ -73,9 +78,83 @@ def start(update: Update, context: CallbackContext) -> None:
     ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Welcome to Garuda Laundry Bot!\n\nUse the following commands to use this bot:\n/select: Select the washer/dryer that you want to use\n/status: Check the status of Washers and Dryers\n\nThank you for using the bot and do drop me any feedback to make this bot more efficient! @jitterz or @jamesyak', reply_markup=reply_markup)
+    update.message.reply_text('Welcome to Garuda Laundry Bot!\n\n'
+                              'Use the following commands to use this bot:\n'
+                              '/select: Select the washer/dryer that you want to use\n'
+                              '/collect: Select the washer/dryer you are collecting from\n'
+                              '/status: Check the status of Washers and Dryers\n\n'
+                              'Thank you for using the bot and do drop me any feedback to make this bot more efficient! @jitterz or @jamesyak', reply_markup=reply_markup)
     return MENU
-    
+
+def collect(update: Update, context: CallbackContext) -> None:
+    keyboard = [
+        [
+            InlineKeyboardButton('QR Washer', callback_data='collect_qr_washer'),
+            InlineKeyboardButton('QR Dryer', callback_data='collect_qr_dryer'),
+        ],
+        [InlineKeyboardButton('Coin Washer', callback_data='collect_coin_washer'),
+         InlineKeyboardButton('Coin Dryer', callback_data='collect_coin_dryer')
+         ],
+        [InlineKeyboardButton('Exit', callback_data='exit')]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    update.message.reply_text('Please choose a service:', reply_markup=reply_markup)
+    return MENU
+
+def double_confirm_qr_dryer_collect(update: Update, _: CallbackContext) -> int:
+    query = update.callback_query
+    query.answer()
+    keyboard = [
+        [InlineKeyboardButton('Yes', callback_data='yes_qr_dryer_collect'),
+         ],
+        [InlineKeyboardButton('No', callback_data='no_qr_dryer_collect')
+         ]
+    ]
+    markup = InlineKeyboardMarkup(keyboard)
+    query.edit_message_text(text="Have you collected your clothes?", reply_markup=markup)
+    return MENU
+
+def double_confirm_coin_dryer_collect(update: Update, _: CallbackContext) -> int:
+    query = update.callback_query
+    query.answer()
+    keyboard = [
+        [InlineKeyboardButton('Yes', callback_data='yes_coin_dryer_collect'),
+         ],
+        [InlineKeyboardButton('No', callback_data='no_coin_dryer_collect')
+         ]
+    ]
+    markup = InlineKeyboardMarkup(keyboard)
+    query.edit_message_text(text="Have you collected your clothes?", reply_markup=markup)
+    return MENU
+
+def double_confirm_qr_washer_collect(update: Update, _: CallbackContext) -> int:
+    query = update.callback_query
+    query.answer()
+    keyboard = [
+        [InlineKeyboardButton('Yes', callback_data='yes_qr_washer_collect'),
+         ],
+        [InlineKeyboardButton('No', callback_data='no_qr_washer_collect')
+         ]
+    ]
+    markup = InlineKeyboardMarkup(keyboard)
+    query.edit_message_text(text="Have you collected your clothes?", reply_markup=markup)
+    return MENU
+
+def double_confirm_coin_washer_collect(update: Update, _: CallbackContext) -> int:
+    query = update.callback_query
+    query.answer()
+    keyboard = [
+        [InlineKeyboardButton('Yes', callback_data='yes_coin_washer_collect'),
+         ],
+        [InlineKeyboardButton('No', callback_data='no_coin_washer_collect')
+         ]
+    ]
+    markup = InlineKeyboardMarkup(keyboard)
+    query.edit_message_text(text="Have you collected your clothes?", reply_markup=markup)
+    return MENU
+
 def status(update: Update, context: CallbackContext) -> None:
     global JOB
     global QR_WASHER_JOB_INDEX ,QR_DRYER_JOB_INDEX ,COIN_WASHER_JOB_INDEX ,COIN_WASHER_JOB_INDEX
@@ -88,6 +167,8 @@ def status(update: Update, context: CallbackContext) -> None:
         qr_washer_sec = round((1800 - qr_washer_time.total_seconds())%60)
         QR_WASHER_TIMER = f'{QR_WASHER} for {qr_washer_min}mins and {qr_washer_sec}s by @{QR_WASHER_LAST_USED}'
     if QR_WASHER == 'AVAILABLE':
+        QR_WASHER_TIMER = f'{QR_WASHER}. Last collected by @{QR_WASHER_LAST_COLLECTED}'
+    if QR_WASHER == 'UNCOLLECTED':
         QR_WASHER_TIMER = f'{QR_WASHER}. Last used by @{QR_WASHER_LAST_USED}'
 
     QR_DRYER_TIMER = ''
@@ -97,6 +178,8 @@ def status(update: Update, context: CallbackContext) -> None:
         qr_dryer_sec = round((2400 - qr_dryer_time.total_seconds())%60)
         QR_DRYER_TIMER = f'{QR_DRYER} for {qr_dryer_min}mins and {qr_dryer_sec}s by @{QR_DRYER_LAST_USED}'
     if QR_DRYER == 'AVAILABLE':
+        QR_DRYER_TIMER = f'{QR_DRYER}. Last collected by @{QR_DRYER_LAST_COLLECTED}'
+    if QR_DRYER == 'UNCOLLECTED':
         QR_DRYER_TIMER = f'{QR_DRYER}. Last used by @{QR_DRYER_LAST_USED}'
 
     COIN_DRYER_TIMER = ''
@@ -106,6 +189,8 @@ def status(update: Update, context: CallbackContext) -> None:
         coin_dryer_sec = round((2400 - coin_dryer_time.total_seconds())%60)
         COIN_DRYER_TIMER = f'{COIN_DRYER} for {coin_dryer_min}mins and {coin_dryer_sec}s by @{COIN_DRYER_LAST_USED}'
     if COIN_DRYER == 'AVAILABLE':
+        COIN_DRYER_TIMER = f'{COIN_DRYER}. Last collected by @{COIN_DRYER_LAST_COLLECTED}'
+    if COIN_DRYER == 'UNCOLLECTED':
         COIN_DRYER_TIMER = f'{COIN_DRYER}. Last used by @{COIN_DRYER_LAST_USED}'
 
     COIN_WASHER_TIMER = ''
@@ -115,6 +200,8 @@ def status(update: Update, context: CallbackContext) -> None:
         coin_washer_sec = round((1800 - coin_washer_time.total_seconds())%60)
         COIN_WASHER_TIMER = f'{COIN_WASHER} for {coin_washer_min}mins and {coin_washer_sec}s by @{COIN_WASHER_LAST_USED}'
     if COIN_WASHER == 'AVAILABLE':
+        COIN_WASHER_TIMER = f'{COIN_WASHER}. Last collected by @{COIN_WASHER_LAST_COLLECTED}'
+    if COIN_WASHER == 'UNCOLLECTED':
         COIN_WASHER_TIMER = f'{COIN_WASHER}. Last used by @{COIN_WASHER_LAST_USED}'
     
     update.message.reply_text(f'Status of Laundry Machines L11:\n\nQR Washer: {QR_WASHER_TIMER}\n\nQR Dryer: {QR_DRYER_TIMER}\n\nCoin Washer: {COIN_WASHER_TIMER}\n\nCoin Dryer: {COIN_DRYER_TIMER}')
@@ -129,7 +216,12 @@ def backtomenu(update: Update, context: CallbackContext) -> None:
     ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    query.edit_message_text('Welcome to Garuda Laundry Bot!\n\nUse the following commands to use this bot:\n/select: Select the washer/dryer that you want to use\n/status: Check the status of Washers and Dryers\n\nThank you for using the bot and do drop me any feedback to make this bot more efficient! @jitterz or @jamesyak', reply_markup = reply_markup)
+    query.edit_message_text('Welcome to Garuda Laundry Bot!\n\n'
+                            'Use the following commands to use this bot:\n'
+                            '/select: Select the washer/dryer that you want to use\n'
+                            '/collect: Select the washer/dryer you are collecting from\n'
+                            '/status: Check the status of Washers and Dryers\n\n'
+                            'Thank you for using the bot and do drop me any feedback to make this bot more efficient! @jitterz or @jamesyak', reply_markup = reply_markup)
     
 def select(update: Update, context: CallbackContext) -> None:
     keyboard = [
@@ -241,10 +333,15 @@ def set_timer_qr_dryer(update: Update, context: CallbackContext) -> None:
     washerdue = int(1800)
     dryerdue = int(2400)
 
+
     job_removed = remove_job_if_exists(str(chat_id), context)
     global QR_DRYER
     if QR_DRYER == 'UNAVAILABLE':
         text = "QR DRYER is currently in use. Please come back again later!"
+        query.message.delete()
+        Tbot.send_message(chat_id = chat_id, text = text)
+    if QR_DRYER == 'UNCOLLECTED':
+        text = "Clothes in QR DRYER has not been collected. Please collect it first!"
         query.message.delete()
         Tbot.send_message(chat_id = chat_id, text = text)
     if QR_DRYER == 'AVAILABLE':
@@ -279,6 +376,10 @@ def set_timer_qr_washer(update: Update, context: CallbackContext) -> None:
         text = "QR WASHER is currently in use. Please come back again later!"
         query.message.delete()
         Tbot.send_message(chat_id = chat_id, text = text)
+    if QR_WASHER == 'UNCOLLECTED':
+        text = "Clothes in QR WASHER has not been collected. Please collect it first!"
+        query.message.delete()
+        Tbot.send_message(chat_id = chat_id, text = text)
     if QR_WASHER == 'AVAILABLE':
         QRWASHER = context.job_queue.run_once(qr_washer_alarm, washerdue, context=chat_id, name='qr_washer')
         QRWASHER
@@ -308,6 +409,10 @@ def set_timer_coin_dryer(update: Update, context: CallbackContext) -> None:
     global COIN_DRYER
     if COIN_DRYER == 'UNAVAILABLE':
         text = "COIN DRYER is currently in use. Please come back again later!"
+        query.message.delete()
+        Tbot.send_message(chat_id = chat_id, text = text)
+    if COIN_DRYER == 'UNCOLLECTED':
+        text = "Clothes in COIN DRYER has not been collected. Please collect it first!"
         query.message.delete()
         Tbot.send_message(chat_id = chat_id, text = text)
     if COIN_DRYER == 'AVAILABLE':
@@ -341,6 +446,10 @@ def set_timer_coin_washer(update: Update, context: CallbackContext) -> None:
         text = "COIN WASHER is currently in use. Please come back again later!"
         query.message.delete()
         Tbot.send_message(chat_id = chat_id, text = text)
+    if COIN_WASHER == 'UNCOLLECTED':
+        text = "Clothes in COIN WASHER has not been collected. Please collect it first!"
+        query.message.delete()
+        Tbot.send_message(chat_id = chat_id, text = text)
     if COIN_WASHER == 'AVAILABLE':
         COINWASHER = context.job_queue.run_once(coin_washer_alarm, washerdue, context=chat_id, name='coin_washer')
         COINWASHER
@@ -355,6 +464,91 @@ def set_timer_coin_washer(update: Update, context: CallbackContext) -> None:
     #    text = 'Status Update: QR DRYER is available'
         query.message.delete()
         Tbot.send_message(chat_id = chat_id, text = text)
+    return MENU
+
+
+def collect_timer_qr_dryer(update: Update, context: CallbackContext) -> None:
+    """Add a job to the queue."""
+    chat_id = update.effective_message.chat_id
+    query = update.callback_query
+    query.answer()
+
+    job_removed = remove_job_if_exists(str(chat_id), context)
+    global QR_DRYER
+    if QR_DRYER == 'AVAILABLE':
+        text = "QR DRYER is available. There are no clothes to collect!"
+        query.message.delete()
+        Tbot.send_message(chat_id=chat_id, text=text)
+    else:
+        QR_DRYER = 'AVAILABLE'
+        global QR_DRYER_LAST_COLLECTED
+        QR_DRYER_LAST_COLLECTED = update.effective_message.chat.username
+        text = "Clothes successfully collected!"
+        query.message.delete()
+        Tbot.send_message(chat_id=chat_id, text=text)
+    return MENU
+
+def collect_timer_qr_washer(update: Update, context: CallbackContext) -> None:
+    """Add a job to the queue."""
+    chat_id = update.effective_message.chat_id
+    query = update.callback_query
+    query.answer()
+
+    job_removed = remove_job_if_exists(str(chat_id), context)
+    global QR_WASHER
+    if QR_WASHER == 'AVAILABLE':
+        text = "QR WASHER is available. There are no clothes to collect!"
+        query.message.delete()
+        Tbot.send_message(chat_id=chat_id, text=text)
+    else:
+        QR_WASHER = 'AVAILABLE'
+        global QR_WASHER_LAST_COLLECTED
+        QR_WASHER_LAST_COLLECTED = update.effective_message.chat.username
+        text = "Clothes successfully collected!"
+        query.message.delete()
+        Tbot.send_message(chat_id=chat_id, text=text)
+    return MENU
+
+def collect_timer_coin_washer(update: Update, context: CallbackContext) -> None:
+    """Add a job to the queue."""
+    chat_id = update.effective_message.chat_id
+    query = update.callback_query
+    query.answer()
+
+    job_removed = remove_job_if_exists(str(chat_id), context)
+    global COIN_WASHER
+    if COIN_WASHER == 'AVAILABLE':
+        text = "COIN WASHER is available. There are no clothes to collect!"
+        query.message.delete()
+        Tbot.send_message(chat_id=chat_id, text=text)
+    else:
+        COIN_WASHER = 'AVAILABLE'
+        global COIN_WASHER_LAST_COLLECTED
+        COIN_WASHER_LAST_COLLECTED = update.effective_message.chat.username
+        text = "Clothes successfully collected!"
+        query.message.delete()
+        Tbot.send_message(chat_id=chat_id, text=text)
+    return MENU
+
+def collect_timer_coin_dryer(update: Update, context: CallbackContext) -> None:
+    """Add a job to the queue."""
+    chat_id = update.effective_message.chat_id
+    query = update.callback_query
+    query.answer()
+
+    job_removed = remove_job_if_exists(str(chat_id), context)
+    global COIN_DRYER
+    if COIN_DRYER == 'AVAILABLE':
+        text = "COIN DRYER is available. There are no clothes to collect!"
+        query.message.delete()
+        Tbot.send_message(chat_id=chat_id, text=text)
+    else:
+        COIN_DRYER = 'AVAILABLE'
+        global COIN_DRYER_LAST_COLLECTED
+        COIN_DRYER_LAST_COLLECTED = update.effective_message.chat.username
+        text = "Clothes successfully collected!"
+        query.message.delete()
+        Tbot.send_message(chat_id=chat_id, text=text)
     return MENU
 
 def main() -> None:
@@ -373,31 +567,48 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start),
                     CommandHandler("select", select),
+                      CommandHandler("collect", collect),
                       CommandHandler("status", status)],
         states={
             MENU: [
                 CallbackQueryHandler(cancel, pattern='^' + 'exit' + '$'),
                 CallbackQueryHandler(cancel, pattern='^' + 'exits' + '$'),
                 
-                CallbackQueryHandler(double_confirm_qr_dryer_callback, pattern='^' + 'qr_dryer' + '$'), #whhich callback_data does start get call
+                CallbackQueryHandler(double_confirm_qr_dryer_callback, pattern='^' + 'qr_dryer' + '$'), #which callback_data does start get call
                 CallbackQueryHandler(double_confirm_qr_washer_callback, pattern='^' + 'qr_washer' + '$'),
                 CallbackQueryHandler(double_confirm_coin_dryer_callback, pattern='^' + 'coin_dryer' + '$'),
                 CallbackQueryHandler(double_confirm_coin_washer_callback, pattern='^' + 'coin_washer' + '$'),
+
+                CallbackQueryHandler(double_confirm_qr_dryer_collect, pattern='^' + 'collect_qr_dryer' + '$'),
+                CallbackQueryHandler(double_confirm_qr_washer_collect, pattern='^' + 'collect_qr_washer' + '$'),
+                CallbackQueryHandler(double_confirm_coin_dryer_collect, pattern='^' + 'collect_coin_dryer' + '$'),
+                CallbackQueryHandler(double_confirm_coin_washer_collect, pattern='^' + 'collect_coin_washer' + '$'),
 
                 CallbackQueryHandler(backtomenu, pattern='^' + 'no_qr_dryer' + '$'),
                 CallbackQueryHandler(backtomenu, pattern='^' + 'no_qr_washer' + '$'),
                 CallbackQueryHandler(backtomenu, pattern='^' + 'no_coin_dryer' + '$'),
                 CallbackQueryHandler(backtomenu, pattern='^' + 'no_coin_washer' + '$'),
 
+                CallbackQueryHandler(backtomenu, pattern='^' + 'no_qr_dryer_collect' + '$'),
+                CallbackQueryHandler(backtomenu, pattern='^' + 'no_qr_washer_collect' + '$'),
+                CallbackQueryHandler(backtomenu, pattern='^' + 'no_coin_dryer_collect' + '$'),
+                CallbackQueryHandler(backtomenu, pattern='^' + 'no_coin_washer_collect' + '$'),
+
                 CallbackQueryHandler(set_timer_qr_dryer, pattern='^' + 'yes_qr_dryer' + '$'),
                 CallbackQueryHandler(set_timer_qr_washer, pattern='^' + 'yes_qr_washer' + '$'),
                 CallbackQueryHandler(set_timer_coin_dryer, pattern='^' + 'yes_coin_dryer' + '$'),
                 CallbackQueryHandler(set_timer_coin_washer, pattern='^' + 'yes_coin_washer' + '$'),
+
+                CallbackQueryHandler(collect_timer_qr_dryer, pattern='^' + 'yes_qr_dryer_collect' + '$'),
+                CallbackQueryHandler(collect_timer_qr_washer, pattern='^' + 'yes_qr_washer_collect' + '$'),
+                CallbackQueryHandler(collect_timer_coin_dryer, pattern='^' + 'yes_coin_dryer_collect' + '$'),
+                CallbackQueryHandler(collect_timer_coin_washer, pattern='^' + 'yes_coin_washer_collect' + '$'),
             ]
             
         },
         fallbacks=[CommandHandler('start', start),
                    CommandHandler("select", select),
+                   CommandHandler("collect", collect),
                    CommandHandler("status", status)],
     )
 
@@ -408,11 +619,11 @@ def main() -> None:
     PORT = int(os.environ.get('PORT', '5000'))
 
     # Start the Bot
-
-    updater.start_webhook(listen="0.0.0.0",
-                          port=PORT,
-                          url_path=TOKEN,
-                          webhook_url="https://garulaundrybot.herokuapp.com/" + TOKEN)
+    updater.start_polling()
+    # updater.start_webhook(listen="0.0.0.0",
+    #                       port=PORT,
+    #                       url_path=TOKEN,
+    #                       webhook_url="https://garulaundrybot.herokuapp.com/" + TOKEN)
     # Block until you press Ctrl-C or the process receives SIGINT, SIGTERM or
     # SIGABRT. This should be used most of the time, since start_polling() is
     # non-blocking and will stop the bot gracefully.
