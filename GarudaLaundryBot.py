@@ -409,7 +409,11 @@ def main() -> None:
 
     # Start the Bot
     #updater.start_polling()
-    updater.start_webhook(listen="0.0.0.0",
+    # updater.start_webhook(listen="0.0.0.0",
+    #                       port=int(PORT),
+    #                       url_path=TOKEN,
+    #                       webhook_url=f"https://{NAME}.herokuapp.com/{TOKEN}")
+    updater.bot.start_webhook(listen="0.0.0.0",
                           port=int(PORT),
                           url_path=TOKEN,
                           webhook_url=f"https://{NAME}.herokuapp.com/{TOKEN}")
