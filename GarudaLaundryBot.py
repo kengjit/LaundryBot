@@ -1,6 +1,7 @@
 #install package - python-telegram-bot
 import datetime
 import telegram
+import os
 from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 import logging
 from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler, ConversationHandler
@@ -16,6 +17,8 @@ COINWASHER = 0
 
 QR_WASHER_JOB_INDEX ,QR_DRYER_JOB_INDEX ,COIN_DRYER_JOB_INDEX ,COIN_WASHER_JOB_INDEX = range(4)
 
+TOKEN = "5197491172:AAGetT6QyuScd5mIi9XlKrGQurWVgeUWECc"
+NAME = "garulaundrybot"
 #Status
 QR_DRYER = 'AVAILABLE'
 QR_WASHER = 'AVAILABLE'
@@ -32,7 +35,7 @@ COIN_WASHER_LAST_USED = ''
 JOB = [0,0,0,0]
 
 #Initialise TelegramBot
-Tbot = telegram.Bot("5197491172:AAGetT6QyuScd5mIi9XlKrGQurWVgeUWECc") # Fill in Token
+Tbot = telegram.Bot(TOKEN) # Fill in Token
 
 def qr_washer_alarm(context: CallbackContext) -> None:
     """Send the alarm message."""
@@ -357,7 +360,7 @@ def set_timer_coin_washer(update: Update, context: CallbackContext) -> None:
 def main() -> None:
     """Run bot."""
     # Create the Updater and pass it your bot's token.
-    updater = Updater("5197491172:AAGetT6QyuScd5mIi9XlKrGQurWVgeUWECc")# Fill in Token
+    updater = Updater(TOKEN)# Fill in Token
 
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
@@ -400,9 +403,16 @@ def main() -> None:
 
     # Add ConversationHandler to dispatcher that will be used for handling updates
     dispatcher.add_handler(conv_handler)
-    
+
+    # Port is given by Heroku
+    PORT = os.environ.get('PORT')
+
     # Start the Bot
-    updater.start_polling()
+    #updater.start_polling()
+    updater.start_webhook(listen="0.0.0.0",
+                          port=int(PORT),
+                          url_path=TOKEN,
+                          webhook_url=f"https://{NAME}.herokuapp.com/{TOKEN}")
 
     # Block until you press Ctrl-C or the process receives SIGINT, SIGTERM or
     # SIGABRT. This should be used most of the time, since start_polling() is
