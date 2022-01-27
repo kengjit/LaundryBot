@@ -405,7 +405,7 @@ def main() -> None:
     dispatcher.add_handler(conv_handler)
 
     # Port is given by Heroku
-    PORT = int(os.environ.get('PORT', '8443'))
+    PORT = int(os.environ.get('PORT', '5000'))
 
     # Start the Bot
 
