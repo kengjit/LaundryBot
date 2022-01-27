@@ -19,6 +19,7 @@ QR_WASHER_JOB_INDEX ,QR_DRYER_JOB_INDEX ,COIN_DRYER_JOB_INDEX ,COIN_WASHER_JOB_I
 
 TOKEN = "5197491172:AAGetT6QyuScd5mIi9XlKrGQurWVgeUWECc"
 NAME = "garulaundrybot"
+
 #Status
 QR_DRYER = 'AVAILABLE'
 QR_WASHER = 'AVAILABLE'
@@ -405,15 +406,11 @@ def main() -> None:
     dispatcher.add_handler(conv_handler)
 
     # Port is given by Heroku
-    PORT = os.environ.get('PORT')
+    PORT = os.environ.get('PORT', 5000)
 
     # Start the Bot
     #updater.start_polling()
-    # updater.start_webhook(listen="0.0.0.0",
-    #                       port=int(PORT),
-    #                       url_path=TOKEN,
-    #                       webhook_url=f"https://{NAME}.herokuapp.com/{TOKEN}")
-    updater.bot.start_webhook(listen="0.0.0.0",
+    updater.start_webhook(listen="0.0.0.0",
                           port=int(PORT),
                           url_path=TOKEN,
                           webhook_url=f"https://{NAME}.herokuapp.com/{TOKEN}")
