@@ -18,7 +18,6 @@ COINWASHER = 0
 QR_WASHER_JOB_INDEX ,QR_DRYER_JOB_INDEX ,COIN_DRYER_JOB_INDEX ,COIN_WASHER_JOB_INDEX = range(4)
 
 TOKEN = "5197491172:AAGetT6QyuScd5mIi9XlKrGQurWVgeUWECc"
-NAME = "garulaundrybot"
 
 #Status
 QR_DRYER = 'AVAILABLE'
@@ -406,18 +405,14 @@ def main() -> None:
     dispatcher.add_handler(conv_handler)
 
     # Port is given by Heroku
-    PORT = os.environ.get('PORT', 5000)
+    PORT = int(os.environ.get('PORT', '8443'))
 
     # Start the Bot
-    #updater.start_polling()
-    # updater.start_webhook(listen="0.0.0.0",
-    #                       port=int(PORT),
-    #                       url_path=TOKEN,
-    #                       webhook_url=f"https://{NAME}.herokuapp.com/{TOKEN}")
+
     updater.start_webhook(listen="0.0.0.0",
-                          port=int(PORT),
-                          url_path=TOKEN)
-    updater.bot.setWebhook('https://garulaundrybot.herokuapp.com/' + TOKEN)
+                          port=PORT,
+                          url_path=TOKEN,
+                          webhook_url="https://garulaundrybot.herokuapp.com/" + TOKEN)
     # Block until you press Ctrl-C or the process receives SIGINT, SIGTERM or
     # SIGABRT. This should be used most of the time, since start_polling() is
     # non-blocking and will stop the bot gracefully.
